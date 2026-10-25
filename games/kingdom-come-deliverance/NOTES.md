@@ -107,3 +107,12 @@ Next: real transport between two games (needs a second PC, or a second instance 
 ### Two copies on one PC + transport (v3, testing)
 - KingdomCome.exe single-instance check is a named mutex `WhKcdGameMutex` (CreateMutexA). Test copy gets a second launcher `KingdomCome2.exe` with the string changed to `WhKcdGameMutx2` (one occurrence, file offset 0x65b0); original exe untouched.
 - Loader v3: role A = KingdomCome.exe, role B = KingdomCome2.exe. Plain UDP, A binds 64200 -> 127.0.0.1:64201, B the reverse (override with kcdcoop_A.ini / kcdcoop_B.ini: `bind=`, `peer=ip:port`). Each sends `KCDCOOP1 P x y z rotZ` at ~10 Hz and calls Lua `CoopSetRemote` with the newest received state. Fake follow now only with a `kcdcoop_fake` file.
+- Result (ran 2026-10-25 20:53, owner screenshot of both windows + loader logs): two copies on one PC (A = KingdomCome.exe, B = KingdomCome2.exe) both loaded the same save; each shows a T-posed puppet driven by the other copy. Loader stats after ~2 min: A sent=1438 recv=1058, B sent=1112 recv=1289, bad=0; received positions track the other side's movement.
+QA level for this milestone: manual (owner-observed, logs), not automated yet.
+
+## Next steps
+1. Puppet animation: replay locomotion (idle/walk/run) from speed, then the player's actual animation state.
+2. Smoothing: interpolate between 10 Hz updates instead of snapping.
+3. Friends over the internet: Steam relay (playbook/networking-steam-spacewar.md) instead of direct UDP.
+4. Automated QA: bot that walks player A along a path and asserts B's puppet follows within tolerance (playbook/automated-qa.md).
+5. Then combat/NPCs (host authority) and story sync.
