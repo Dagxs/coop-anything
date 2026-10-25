@@ -87,3 +87,17 @@ Next:
 ## Status after session 2
 Waking CryEngine's built-in netcode has hit three separate barriers so far: (1) listen-server join block in the packet dispatcher (found, patchable), (2) the host's own `<local>` client still never completes its handshake with the block removed, (3) `dedicated` map mode exits during level load. Each could be investigated further, but the path is uncertain.
 Alternative (the KCDMP / most-mods route): leave both games in normal single player and add our own sync layer from an injected DLL (positions/animations/horses first, then combat, then story), with our own transport (Steam relay). Loader/proxy DLL from this session is a usable injection point.
+
+## Route change: own sync layer (2026-10-25)
+Owner chose "do what works": both players run normal single player; an injected DLL syncs state (KCDMP-style).
+
+### Script bridge (ran, works)
+- Injection: proxy `dinput8.dll` in the test copy's Bin\Win64 (WHGame.dll imports DINPUT8!DirectInput8Create).
+- `gEnv->pConsole` is the static pointer at RVA 0x29d1768 (seen as `mov rcx,[rip+..]; call [vt+0xb8]` = GetCVar).
+- CXConsole::ExecuteString(cmd, bSilent, bDefer) at RVA 0xec6920 = console vtable[35] (verified at runtime). Deferred commands run on the main thread next frame.
+- ICVar vtable: +0x10 GetIVal, +0x20 GetFVal, +0x28 GetString, +0x48 Set(const char*).
+- "#lua" console commands are executed only if ISystem::IsDevMode() (check at 0xec7026: `call [rax+0x360]; test al,al; je` ). Loader nops that `je` (0xec702e `74 5A` -> `90 90`) instead of enabling dev mode. con_restricted is set to 0 via ICVar.
+- Data back from the game: Lua `System.SetCVar('cl_serveraddr', ...)`, DLL reads it with GetString.
+- Result: `[coop] hello from the kcdcoop loader` in kcd.log; loader log shows live `P x y z rotZ` (e.g. `P 733.88 3421.90 63.91 -1.965`), updating as the player moves.
+### Puppet (in progress)
+- v2.2: Lua `CoopSetRemote(x,y,z,rz)` spawns a BasicEntity "coop_puppet" with `objects/characters/humans/skeleton/male.cdf` and moves it; `CoopFakeFollow()` solo test keeps it 2 m beside the player.
