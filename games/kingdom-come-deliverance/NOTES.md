@@ -80,3 +80,10 @@ Derived:
 - The listen-server block is real but is not the only obstacle for the host's own `<local>` client; its setup packet may never reach the dispatcher, or fails later.
 Next:
 - Try `map rataje s dedicated` (no local client) and check `status`; then connect a second client over real UDP (single-instance check in KingdomCome.exe blocks a second copy on one PC: test from a second PC or bypass that check in the test copy).
+
+## Dedicated server test (ran)
+- With the loader patches active: `sv_port 64100; map rataje s dedicated` -> log reaches "Level system is loading \"rataje\"" and the process exits with no further log lines, no dump, no error dialog. Dedicated mode does not survive level load in this client build (cause unknown; patches not ruled out, but the dispatcher is not involved before level load).
+
+## Status after session 2
+Waking CryEngine's built-in netcode has hit three separate barriers so far: (1) listen-server join block in the packet dispatcher (found, patchable), (2) the host's own `<local>` client still never completes its handshake with the block removed, (3) `dedicated` map mode exits during level load. Each could be investigated further, but the path is uncertain.
+Alternative (the KCDMP / most-mods route): leave both games in normal single player and add our own sync layer from an injected DLL (positions/animations/horses first, then combat, then story), with our own transport (Steam relay). Loader/proxy DLL from this session is a usable injection point.
