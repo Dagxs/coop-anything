@@ -103,3 +103,7 @@ Owner chose "do what works": both players run normal single player; an injected 
 - v2.2: Lua `CoopSetRemote(x,y,z,rz)` spawns a BasicEntity "coop_puppet" with `objects/characters/humans/skeleton/male.cdf` and moves it; `CoopFakeFollow()` solo test keeps it 2 m beside the player.
 - Puppet result (ran, owner-confirmed with screenshot): after New Game in Skalitz, a T-posed male character (BasicEntity + male.cdf) stands next to the player and follows as the player moves (fake-follow test, +2 m on world X). kcd.log: `[coop] puppet spawned id=... character=true`. The puppet spawned once in the menu scene and persisted into the new game (same level).
 Next: real transport between two games (needs a second PC, or a second instance on one PC past the exe's single-instance check), then animation on the puppet.
+
+### Two copies on one PC + transport (v3, testing)
+- KingdomCome.exe single-instance check is a named mutex `WhKcdGameMutex` (CreateMutexA). Test copy gets a second launcher `KingdomCome2.exe` with the string changed to `WhKcdGameMutx2` (one occurrence, file offset 0x65b0); original exe untouched.
+- Loader v3: role A = KingdomCome.exe, role B = KingdomCome2.exe. Plain UDP, A binds 64200 -> 127.0.0.1:64201, B the reverse (override with kcdcoop_A.ini / kcdcoop_B.ini: `bind=`, `peer=ip:port`). Each sends `KCDCOOP1 P x y z rotZ` at ~10 Hz and calls Lua `CoopSetRemote` with the newest received state. Fake follow now only with a `kcdcoop_fake` file.
