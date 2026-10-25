@@ -101,3 +101,5 @@ Owner chose "do what works": both players run normal single player; an injected 
 - Result: `[coop] hello from the kcdcoop loader` in kcd.log; loader log shows live `P x y z rotZ` (e.g. `P 733.88 3421.90 63.91 -1.965`), updating as the player moves.
 ### Puppet (in progress)
 - v2.2: Lua `CoopSetRemote(x,y,z,rz)` spawns a BasicEntity "coop_puppet" with `objects/characters/humans/skeleton/male.cdf` and moves it; `CoopFakeFollow()` solo test keeps it 2 m beside the player.
+- Puppet result (ran, owner-confirmed with screenshot): after New Game in Skalitz, a T-posed male character (BasicEntity + male.cdf) stands next to the player and follows as the player moves (fake-follow test, +2 m on world X). kcd.log: `[coop] puppet spawned id=... character=true`. The puppet spawned once in the menu scene and persisted into the new game (same level).
+Next: real transport between two games (needs a second PC, or a second instance on one PC past the exe's single-instance check), then animation on the puppet.
