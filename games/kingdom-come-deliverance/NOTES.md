@@ -126,3 +126,11 @@ QA level for this milestone: manual (owner-observed, logs), not automated yet.
 
 ## Code
 Loader source, Lua scripts and analysis helpers: https://github.com/Dagxs/kcd-coop (MIT, no game files).
+
+## Session 2c: stand-in looks like Henry (ran, owner screenshots)
+- Player script API found by dumping metatables: `player.actor:MakeLookAsActor(id)`, `:MakeLookAsSoul(guid)`, `EquipClothingPreset`, `EquipInventoryItem`; `player.soul:OverrideHead(guid)`, `:OverrideHair(guid)`, `GetId()`; `player.inventory:GetInventoryTable()`; `player.human:PlayAnim`, `SetAnimMotionParam`.
+- A BasicEntity has no `.actor`, so the stand-in is now `System.SpawnEntity({class='NPC', ...})` (gets actor/soul/human).
+- Henry's soul in libs/tables/rpg/soul.xml (Tables.pak) is `dude` 43144483-f3bb-fab8-9ceb-f77e3020598a, head `henry` 4b8b7289-41e9-2785-a0b9-1651465445a5, hair `hair_henry` 4bc51034-3ad5-0050-f5c1-ba11046ed4ba. (Tables.pak entries use backslash names; Python zipfile needs manual extraction.)
+- MakeLookAsActor(player.id) alone copies clothes but leaves the default bald head; MakeLookAsSoul with the WUID userdata from soul:GetId() did nothing visible. MakeLookAsSoul(guid string) + OverrideHead + OverrideHair + MakeLookAsActor gives Henry's face, hair and shirt.
+- `AI.SetBehaviorTreeEvaluationEnabled(id, false)` switches the NPC's brain off (it wandered before).
+- Owner screenshot: both copies show a Henry stand-in.
