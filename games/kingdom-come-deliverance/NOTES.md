@@ -116,3 +116,10 @@ QA level for this milestone: manual (owner-observed, logs), not automated yet.
 3. Friends over the internet: Steam relay (playbook/networking-steam-spacewar.md) instead of direct UDP.
 4. Automated QA: bot that walks player A along a path and asserts B's puppet follows within tolerance (playbook/automated-qa.md).
 5. Then combat/NPCs (host authority) and story sync.
+
+## Session 2b: smoothing + animation (ran, owner-confirmed)
+- Loader v3.1: ~30 Hz loop, exponential smoothing toward the newest remote state (snap if >5 m), remote ground speed estimated from packet deltas; command file `kcdcoop_cmd_<A|B>.lua` in the game root is run as one Lua chunk and deleted (live scripting without restarts). Commands queued while a level is loading are lost: send them once in the world.
+- Owner: "it's very smooth now".
+- `System.ScanDirectory` works inside paks. Male locomotion lives in Mannequin blendspaces under Animations/humans/male/blendspace/locomotion. Puppet (male.cdf) accepts as StartAnimation names (GetAnimationLength > 0): `1d_relaxed_idle_bigturns_nw` (2.07 s), `2d_relaxed_walk_strafe_spd_fwd` (2.61 s), `2d_relaxed_run_strafe_spd_fwd` (1.21 s), plus `_ext` and `3d_relaxed_*_turn_strafe` variants.
+- Lua CoopAnimate(e, speed): idle / walk / run by remote speed with hysteresis (walk >0.7, run >3.5, back to walk <2.9, idle <0.3). Observed speeds: walk 1.7-2.7 m/s, run 3.3-4.0 m/s. Owner screenshot: both puppets idle-posed; log shows idle->walk->run->idle switching.
+- Puppet looks like the base male model (bald, plain shirt). Henry's appearance/equipment is a later step.
