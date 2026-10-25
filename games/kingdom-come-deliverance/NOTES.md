@@ -63,3 +63,20 @@ WHGame.dll still contains CNetNub server-side handshake strings: "processing Key
 - Next steps:
   1. Ghidra analysis of WHGame.dll (Ghidra 12.2 + Temurin JDK 25; first pass was stopped before finishing). Find xrefs to "Retrying connection to %s (%d)", "connection requested to: %s", "processing KeyExchange0..." and follow how `<local>` addresses are routed vs UDP.
   2. Try a real second client over UDP (second PC, or bypass the single-instance check on one PC) connecting to the host's 64100.
+
+## Session 2 (2026-10-25 evening): the listen-server join block
+Tooling: own PE helpers (pefile + capstone + numpy) instead of Ghidra; Ghidra 12.2 headless ran out of heap (6 GB) on the 48 MB WHGame.dll.
+RVAs below are relative to WHGame.dll image base 0x180000000, build SHA-256 cf9f6dc3...81aa.
+
+Observations (static, ran):
+- CNetNub connection-packet functions (found via their log strings): conn-setup checks (size / "Protocol version mismatch" / "Client token id mismatch" / "Build version mismatch") at 0x2102670; KeyExchange0 at 0x2101d48; KeyExchange1 at 0x2101fac; disconnect-packet handler at 0x2101818; client connect "connection requested to: %s" at 0x20fa250; client retry loop ("Retrying connection", "Resending KeyExchange1") at 0x2103688.
+- Packet dispatcher 0x393900 (+ cold part 0xc32d3a) switches on packet type. For type 5 (connection setup) at 0xc32d99 and type 0x8A at 0xc32e58 it tests three globals:
+  0x29d18d0 = gEnv bServer, 0x29d18d1 = gEnv bMultiplayer, 0x29d1959 = gEnv bClient (all three written together in CCryAction::StartGameContext around 0x183cf96..0x183cfc1 from the game-context flags; the "multiplayer"/"singleplayer" config choice happens there too).
+- If bServer && bMultiplayer && bClient (a listen server), a connection-setup packet is passed to the DISCONNECT handler with length 1 ("Corrupted disconnect packet") instead of the server conn-setup handler, and type 0x8A goes to KeyExchange0 instead of KeyExchange1. A dedicated server (bClient=0) or pure client takes the normal path.
+- `map` console command options (CCryAction::MapCmd ~0x1887640): "dedicated", "record", "server", "nonblocking".
+
+Experiment (ran): proxy dinput8.dll in the test copy's Bin\Win64 (source kept in local tooling) patches 0xc32d99 -> `EB 16` and 0xc32e58 -> `EB 2D` in memory after verifying original bytes; loader log confirmed both patches applied. Result of `sv_port 64100; map rataje s`: unchanged, host's own client still times out after 30 s retrying `<local>:64100`.
+Derived:
+- The listen-server block is real but is not the only obstacle for the host's own `<local>` client; its setup packet may never reach the dispatcher, or fails later.
+Next:
+- Try `map rataje s dedicated` (no local client) and check `status`; then connect a second client over real UDP (single-instance check in KingdomCome.exe blocks a second copy on one PC: test from a second PC or bypass that check in the test copy).
