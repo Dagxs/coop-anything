@@ -145,3 +145,11 @@ Observations (ran):
 - `MakeLookAsActor` copies visuals only: the target's inventory stays empty.
 - Relevant RTTI classes: wh::entitymodule::C_ActorEquipmentHandler, C_EquipmentManager, I_EquipmentManagerListener, C_EquippableItemRuntimeData, C_ClothingAttachmentManagerBase, C_ClothingSystem. tools/rtti.py in kcd-coop lists classes and vtables (incl. secondary subobjects).
 Next: trace the binding template 0x10b056c to the object that owns equip (likely C_ActorEquipmentHandler), find its equipped-items container or register an I_EquipmentManagerListener, then send worn item classes and dress the stand-in with inventory:CreateItem + actor:EquipInventoryItem.
+
+## Gear sync working (ran 2026-10-25 21:54, owner screenshot + logs)
+- Script handler for actor:EquipInventoryItem is C_ScriptBindActor vtable (subobject +0) slot +0x298 = 0x10c52cc (the 0xb1ab78 stub is a virtual-member thunk on the binder, not the actor). It resolves the actor, takes `[actor+0x650]->vt[+0x268]()` = equipment handler, and calls the internal equip routine 0x44d6c8(handler, itemWuid). Unequip: 0x10e9a7c -> 0x44c7bc.
+- Clothing (item type 0x100f) is kept in an MSVC std::unordered_set<WUID> at handler+0x10 (list head ptr at +0x18, size at +0x20, nodes {next, prev, wuid}); equip inserts, unequip erases (0x450ef4).
+- Loader v3.4 inline-hooks 0x44d6c8 (17-byte prologue verified, relocatable) and finds the player's handler by having Lua equip a keyring as a probe and matching the WUID. Worn WUIDs (hex) -> Lua matches `tostring(wuid)` from the inventory table -> item class GUIDs -> `KCDCOOP1 G <classes>` every 2 s (filtered to GUID characters on receipt).
+- Receiver: reset stand-in to Henry (MakeLookAsSoul + head/hair overrides), `inventory:CreateItem(class, 1, 1)` (returns nothing: new item found by diffing GetInventoryTable), `actor:EquipInventoryItem(id)`.
+- Result: stand-in wears the other player's green shirt, red hood, trousers, boots; live change (shirt removed) re-dressed within ~2 s, both directions.
+- Lesson: device file copies of a same-size DLL were silently skipped once; verify SHA-256 of deployed files after every copy.
