@@ -163,3 +163,12 @@ Next: trace the binding template 0x10b056c to the object that owns equip (likely
 1. Mirror attacks/blocks (combat animations), then shared enemies with host authority.
 2. Steam relay for internet play.
 3. Automated QA bot (playbook/automated-qa.md); current QA level is manual.
+
+## Attack mirroring research (2026-10-25 22:20, not working yet)
+Observations (ran):
+- `player.actor:GetCurrentAnimationState()` returns a coarse state string; while fighting it cycles `CombatAttack`, `CombatIdle`, `CombatMovement`, and `MotionMovement` when out of combat. Blocking did not show as its own state in a 20 s capture.
+- Playable (GetAnimationLength > 0) loose animations matching attack/block/parry on the male skeleton are only block blendspaces (`1d-free-block_*_shld`, `1d-combat_lg_block_nw`, `1d-combat_rg_block_nw`, `freeblock/*`), `aimposes_free_attacks` (an aim pose) and cutscene .caf files. Directional attacks are not loose files (inside .dba databases / Mannequin fragments).
+- Game scripts never play combat fragments; `human:PlayAnim` is unused in Scripts.pak.
+Derived:
+- Mirroring attacks needs the native combat module (RTTI wh::combatmodule::C_CombatPlayer etc.): find the routine that starts an attack for an actor and call it on the stand-in (with its brain off), or drive the stand-in's Mannequin action controller.
+Lua jobs: kcd-coop lua/watch_anim_state.lua, lua/find_attack_anims.lua.
