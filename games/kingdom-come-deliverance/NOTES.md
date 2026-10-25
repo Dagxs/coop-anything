@@ -52,3 +52,14 @@ Derived:
 - At 64100 the server side gets further but never answers its own client's handshake. Possible causes: server-side channel handling stripped (PURE CLIENT), or the server nub silently not listening. Next check: is UDP 64100 actually bound (netstat on the host).
 - Host check while stuck after test 2: `netstat -ano -p udp` shows `UDP 0.0.0.0:64100 *:*` owned by the game process. The server socket IS open; the server just never answers the connection handshake.
 - String search of WHGame.dll for connection-request/reject handling was inconclusive (mostly libcurl/TLS strings). Next: static analysis of the CryNetwork connect path in Ghidra.
+
+## Server-side handshake strings (static, ran)
+WHGame.dll still contains CNetNub server-side handshake strings: "processing KeyExchange0 with illegal sized packet", "Too short connection packet", "processing KeyExchange1 with illegal sized packet", "Protocol version mismatch", "Build version mismatch", "Client token id mismatch", "Pending connection not found". Server join handling does not look compiled out.
+
+## Where we left off (2026-10-25)
+- Test copy on the owner's PC in a separate folder; user.cfg sets con_restricted=0. Real install untouched.
+- Hosting test recipe: main menu, console: `sv_port 64100`, then `map rataje s`. Server binds UDP 64100, host's own client connects to `<local>:64100` and times out; game hangs (kill via Task Manager).
+- Hypothesis (unverified): the `<local>` loopback path is only wired for normal single player (client at `<local>:16`); a remote client over real UDP may behave differently.
+- Next steps:
+  1. Ghidra analysis of WHGame.dll (Ghidra 12.2 + Temurin JDK 25; first pass was stopped before finishing). Find xrefs to "Retrying connection to %s (%d)", "connection requested to: %s", "processing KeyExchange0..." and follow how `<local>` addresses are routed vs UDP.
+  2. Try a real second client over UDP (second PC, or bypass the single-instance check on one PC) connecting to the host's 64100.
