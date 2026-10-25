@@ -50,3 +50,5 @@ Derived (not yet tested):
 Derived:
 - The 64087 failure was most likely the port being in use, not hosting being compiled out.
 - At 64100 the server side gets further but never answers its own client's handshake. Possible causes: server-side channel handling stripped (PURE CLIENT), or the server nub silently not listening. Next check: is UDP 64100 actually bound (netstat on the host).
+- Host check while stuck after test 2: `netstat -ano -p udp` shows `UDP 0.0.0.0:64100 *:*` owned by the game process. The server socket IS open; the server just never answers the connection handshake.
+- String search of WHGame.dll for connection-request/reject handling was inconclusive (mostly libcurl/TLS strings). Next: static analysis of the CryNetwork connect path in Ghidra.
