@@ -135,3 +135,13 @@ Loader source, Lua scripts and analysis helpers: https://github.com/Dagxs/kcd-co
 - `AI.SetBehaviorTreeEvaluationEnabled(id, false)` switches the NPC's brain off (it wandered before).
 - Owner screenshot: both copies show a Henry stand-in.
 - Loader v3.2 (kcd-coop main): lua/coop_core.lua embedded into the DLL at build time; after a full restart both copies show the Henry NPC stand-in immediately and it idles/walks/runs (owner screenshot + "he runs properly"). Remaining look gap: stand-in wears the local player's clothes (shirt, braies, barefoot here), not the remote player's gear.
+
+## Gear sync research (in progress, 2026-10-25)
+Observations (ran):
+- `player.inventory:GetInventoryTable()` -> item WUIDs; `ItemManager.GetItem(wuid)` -> {class (guid string), health, amount, entity, id}. `ItemManager.GetItemName(class)` gives names (e.g. shirt_002_green, pants_005, boots_002, hood_004_down_ptacek). No equipped flag: the list is identical before and after equipping boots + shirt in the inventory UI. `entity` stays 0.
+- Game Lua scripts (Scripts.pak, 495 files) only ever call EquipInventoryItem / EquipClothingPreset / UnequipInventoryItem; no equipped query exists in script.
+- `player.actor.__this` / `player.human.__this` = entity id (0x7777), not a pointer; `player.inventory.__this` and `player.__this` are native pointers.
+- Lua binding stubs: EquipInventoryItem -> `mov rax,[rcx]; jmp [rax+0x298]`, Unequip -> +0x2A0 (handlers 0xb1ab78 / 0xb1ab84, registered in 0x10b7800). The C_Player primary vtable (0x26c3e30) slots there are trivial getters, so `rcx` is some other object resolved by the binding template (0x10b056c); not traced yet.
+- `MakeLookAsActor` copies visuals only: the target's inventory stays empty.
+- Relevant RTTI classes: wh::entitymodule::C_ActorEquipmentHandler, C_EquipmentManager, I_EquipmentManagerListener, C_EquippableItemRuntimeData, C_ClothingAttachmentManagerBase, C_ClothingSystem. tools/rtti.py in kcd-coop lists classes and vtables (incl. secondary subobjects).
+Next: trace the binding template 0x10b056c to the object that owns equip (likely C_ActorEquipmentHandler), find its equipped-items container or register an I_EquipmentManagerListener, then send worn item classes and dress the stand-in with inventory:CreateItem + actor:EquipInventoryItem.
