@@ -134,3 +134,4 @@ Loader source, Lua scripts and analysis helpers: https://github.com/Dagxs/kcd-co
 - MakeLookAsActor(player.id) alone copies clothes but leaves the default bald head; MakeLookAsSoul with the WUID userdata from soul:GetId() did nothing visible. MakeLookAsSoul(guid string) + OverrideHead + OverrideHair + MakeLookAsActor gives Henry's face, hair and shirt.
 - `AI.SetBehaviorTreeEvaluationEnabled(id, false)` switches the NPC's brain off (it wandered before).
 - Owner screenshot: both copies show a Henry stand-in.
+- Loader v3.2 (kcd-coop main): lua/coop_core.lua embedded into the DLL at build time; after a full restart both copies show the Henry NPC stand-in immediately and it idles/walks/runs (owner screenshot + "he runs properly"). Remaining look gap: stand-in wears the local player's clothes (shirt, braies, barefoot here), not the remote player's gear.
