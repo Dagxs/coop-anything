@@ -41,3 +41,12 @@ Observations (ran):
 - `map rataje s` (load level as network server): loads `data\config\multiplayer.cfg`, then "[net] Failed creating network nub at 0.0.0.0:64087" -> "Failed initializing game"; game hangs on the loading screen and has to be killed.
 Derived (not yet tested):
 - Either the server nub is compiled out (PURE CLIENT), or the port was busy. Test 2: sv_port=64100.
+
+## Console test 2 (2026-10-25)
+- `sv_port` in user.cfg is overridden at startup (still 64087 in console); setting it in the console at the main menu works.
+- Test 1 repeated at 64087: same "Failed creating network nub at 0.0.0.0:64087".
+- `sv_port 64100` then `map rataje s`: NO nub error this time. multiplayer.cfg loads, CBreakReplicator initializes, then the local client does
+  "connection requested to: <local>:64100", retries 110 times over 30 s, "Connection to <local>:64100 timed out" -> "Failed initializing game".
+Derived:
+- The 64087 failure was most likely the port being in use, not hosting being compiled out.
+- At 64100 the server side gets further but never answers its own client's handshake. Possible causes: server-side channel handling stripped (PURE CLIENT), or the server nub silently not listening. Next check: is UDP 64100 actually bound (netstat on the host).
