@@ -153,3 +153,13 @@ Next: trace the binding template 0x10b056c to the object that owns equip (likely
 - Receiver: reset stand-in to Henry (MakeLookAsSoul + head/hair overrides), `inventory:CreateItem(class, 1, 1)` (returns nothing: new item found by diffing GetInventoryTable), `actor:EquipInventoryItem(id)`.
 - Result: stand-in wears the other player's green shirt, red hood, trousers, boots; live change (shirt removed) re-dressed within ~2 s, both directions.
 - Lesson: device file copies of a same-size DLL were silently skipped once; verify SHA-256 of deployed files after every copy.
+
+## Weapons (ran 2026-10-25 22:01, loader v3.5 / core v4)
+- Weapon slots: 12 WUIDs at equipment handler +0x50 (counter at +0xB0); empty slot value = global at RVA 0x300F8D8. Included in the gear list -> stand-in gets the same weapon items equipped.
+- Drawn flag: `player.human:IsWeaponDrawn()` appended to the position packet (`P x y z rot drawn`); remote calls `e.human:DrawWeapon()` / `HolsterWeapon()` on the stand-in (brain off still works) and skips locomotion anims while drawn.
+- Result: prologue training sword (class e5fc1a89-9bb1-44a9-a524-c6834a5e2e76) appeared in A's gear list; B logged repeated `remote weapon drawn/holstered ok=true` as A drew and sheathed; owner screenshot shows the stand-in holding a sword. Combat moves are not mirrored yet.
+
+## Next steps (updated)
+1. Mirror attacks/blocks (combat animations), then shared enemies with host authority.
+2. Steam relay for internet play.
+3. Automated QA bot (playbook/automated-qa.md); current QA level is manual.
