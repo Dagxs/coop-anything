@@ -32,3 +32,12 @@
 - https://github.com/benjaminfoo/KCD-Coding-Guide (Lua console, .pak mods)
 - https://gist.github.com/CrumblyLiquid/a7d9c6d9077ae362b2b7deaad8259409 (KCD1 modding resource list)
 - games/crysis/README.md in this repo (CryEngine campaign co-op design)
+
+## Console test 1 (2026-10-25, test copy, user.cfg con_restricted=0)
+Observations (ran):
+- `status` at main menu: "Server Status ... gamerules: SinglePlayer, players: 1/1"; Connection Status shows player "Dude" at `<local>:16`. Single player runs as an in-process server + local client.
+- cvars: `sv_port = 64087`, `sv_bind = 0.0.0.0`, `sv_maxplayers = 32`, `sv_gamerules = SinglePlayer`, `cl_serveraddr = localhost`.
+- Startup log: "Initializing CryNetwork done", "[Network Version]: RELEASE PURE CLIENT", "Remote console listening on: 4600".
+- `map rataje s` (load level as network server): loads `data\config\multiplayer.cfg`, then "[net] Failed creating network nub at 0.0.0.0:64087" -> "Failed initializing game"; game hangs on the loading screen and has to be killed.
+Derived (not yet tested):
+- Either the server nub is compiled out (PURE CLIENT), or the port was busy. Test 2: sv_port=64100.
