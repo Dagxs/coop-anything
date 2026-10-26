@@ -189,3 +189,19 @@ Next: real attack direction/zone and blocks from the combat module (C_CombatActo
 - Hold time is `GetAnimationLength(0,name)*0.85` instead of a fixed 0.9 s; attacks re-trigger while CombatAttack persists (combos). Guard side stays the same for the follow-up block/hit.
 - Derived, untested: whether `GetAnimationLength` returns seconds for these names on an NPC.
 - Test 2026-10-26 (real fight, player A fighting, B watching): owner reports "it was smoother". Loader log samples (every ~5 s) show B received combat states 1 (idle), 2 (attack), 3 (movement) and 5 (hit); no Lua errors in kcd.log. Block (4) and dodge (6) not seen in the samples (unknown whether they occurred). QA level still manual.
+
+### 2026-10-26: shared enemies v1 (loader v3.8, core v7-v10)
+Observations:
+- Level NPCs have stable entity names in both worlds (`ska_motherOfHenry`, `ska_groom`, ...); `Properties.sharedSoulGuid` is nil for them, set for script-spawned NPCs.
+- `AI.Hostile(a,b)` works from console Lua; `AI.GetFactionOf` returns nil. `actor:GetHealth()` is 0-100 for player and NPCs. `actor:GetCurrentAnimationState()` works on NPCs.
+- `SpawnEnemy()` (Scripts/Quests/DebugPlayerFightSkills.lua) exists but errors midway and still leaves a non-hostile NPC behind. Own spawn works: `System.SpawnEntity({class='NPC', properties={sharedSoulGuid='44853669-3db0-d315-9180-f6b4cea54899'}})` + `actor:EquipWeaponPreset('49b5c516-b2d9-ada9-2a77-44a8ca1a2182')` + `AI.AddPersonallyHostile(id, player.id)` (lua/spawn_test_bandit.lua).
+- `soul:DealDamage(health, stamina, __null, true)` (from Scripts/Script/Quick.lua) applies damage; `actor:SetHealth(100)` on the brainless stand-in did not restore its health.
+- `System.GetCurrTime()` resets when a save is loaded: any stored timestamp then gates forever. Use a monotonic wrapper.
+- The stand-in NPC is saved into the save game; on load a second one was spawned. Now reused by name, duplicates removed.
+- Both instances write the same kcd.log (interleaved).
+Design (host = A):
+- Outbox: Lua `CoopFlush(seq)` runs the co-op tick and writes `<seq>|msg|msg` to `sv_password`; the loader sends it when seq matches (handshake, no lost batches). Receiver runs `CoopRecv('<msgs>')` after a character whitelist.
+- `E;name;soul;x;y;z;rz;hp;flags;cstate` host to client 10 Hz for hostile / in-combat / hurt NPCs within 60 m of either player (tracked to 100 m). Client takes over the same-named local NPC (brain off) or spawns a proxy, smooths it at 30 Hz, mirrors anims, kills it when host says dead, releases after 3 s silence. Client hides its own local hostiles (host world wins).
+- `D;name;amount` client to host when the client's hit lowers a proxy's health; host `DealDamage`s the real NPC.
+- `H;amount` when the stand-in is hurt in the other world; the receiver `DealDamage`s its player.
+Tests: tests/test_enemy_sync.py (two fake Lua worlds in lupa, 9 checks, passing). Bugs found in real runs and fixed: name clash between two NPCs, enemy chased out of the 35 m radius, clock reset on reload, damage relayed every tick (now once per hit, regression test added).
