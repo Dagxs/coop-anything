@@ -188,3 +188,4 @@ Next: real attack direction/zone and blocks from the combat module (C_CombatActo
 - Stand-in plays block `1d-combat_%s_z%d_nblksw_lngsw`, hit `combat_%s_z%d_hitst_z5_lngsw`, dodge `combat_%s_z0_dodge_back_lngsw` (names from kcd_male_database.adb).
 - Hold time is `GetAnimationLength(0,name)*0.85` instead of a fixed 0.9 s; attacks re-trigger while CombatAttack persists (combos). Guard side stays the same for the follow-up block/hit.
 - Derived, untested: whether `GetAnimationLength` returns seconds for these names on an NPC.
+- Test 2026-10-26 (real fight, player A fighting, B watching): owner reports "it was smoother". Loader log samples (every ~5 s) show B received combat states 1 (idle), 2 (attack), 3 (movement) and 5 (hit); no Lua errors in kcd.log. Block (4) and dodge (6) not seen in the samples (unknown whether they occurred). QA level still manual.
