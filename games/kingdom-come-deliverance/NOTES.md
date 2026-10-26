@@ -181,3 +181,10 @@ Lua jobs: kcd-coop lua/watch_anim_state.lua, lua/find_attack_anims.lua.
 - Test helper: `player.inventory:CreateItem('e5fc1a89-9bb1-44a9-a524-c6834a5e2e76', 1, 1)` gives the training sword (`player:CheatGiveSword()` errors in this build).
 - Lesson: the device file transfer reuses stale content when the same staged file name is committed again; always commit from a fresh file name and verify.
 Next: real attack direction/zone and blocks from the combat module (C_CombatActorActionAttack etc.), smoother transitions; then shared enemies.
+
+### 2026-10-26: combat polish (loader v3.7, core v6), not yet tested
+- State is now published and sent every tick (about 30 Hz) instead of every 3rd.
+- Combat state codes: 1 other Combat*/Free*, 2 Attack, 3 Movement, 4 Block (CombatPreBlock, CombatBlockSlash, ...), 5 Hit/BlockBroken, 6 Dodge. Matched by substring on `GetCurrentAnimationState()`.
+- Stand-in plays block `1d-combat_%s_z%d_nblksw_lngsw`, hit `combat_%s_z%d_hitst_z5_lngsw`, dodge `combat_%s_z0_dodge_back_lngsw` (names from kcd_male_database.adb).
+- Hold time is `GetAnimationLength(0,name)*0.85` instead of a fixed 0.9 s; attacks re-trigger while CombatAttack persists (combos). Guard side stays the same for the follow-up block/hit.
+- Derived, untested: whether `GetAnimationLength` returns seconds for these names on an NPC.
