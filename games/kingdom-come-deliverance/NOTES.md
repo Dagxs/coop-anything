@@ -172,3 +172,12 @@ Observations (ran):
 Derived:
 - Mirroring attacks needs the native combat module (RTTI wh::combatmodule::C_CombatPlayer etc.): find the routine that starts an attack for an actor and call it on the stand-in (with its brain off), or drive the stand-in's Mannequin action controller.
 Lua jobs: kcd-coop lua/watch_anim_state.lua, lua/find_attack_anims.lua.
+
+## Combat mirroring v1 (ran 2026-10-26, loader v3.6 / core v5)
+- Animations/Mannequin/ADB/*.adb are in Animations-part1.pak (351 MB, stageable). kcd_male_database.adb has 612 fragment IDs; CombatAttack fragments map tags like `rightGuard+eZ3+aZ0+slash+attack_heavy` -> `1d-combat_rg_z0_natksw_lngsw`; CombatIdle -> `combat_{lg|rg}_z{0-5}_idle01_lngsw`; CombatBlockSlash -> `1d-combat_{rg|lg}_z{0-4}_nblksw_lngsw`; CombatPreBlock -> `combat_*_nblksw01_lngsw_over`.
+- Position packet now carries combat state from `player.actor:GetCurrentAnimationState()` (CombatIdle=1, CombatAttack=2, CombatMovement=3). Remote with weapon drawn: loops the combat stance; on each new CombatAttack plays an attack (alternating guard, random zone 0-4) for 0.9 s.
+- Free swings with no opponent stay MotionIdle/MotionMovement, so only real fights are mirrored.
+- Result: owner saw stance and swings on the stand-in in a random encounter; "a little finicky".
+- Test helper: `player.inventory:CreateItem('e5fc1a89-9bb1-44a9-a524-c6834a5e2e76', 1, 1)` gives the training sword (`player:CheatGiveSword()` errors in this build).
+- Lesson: the device file transfer reuses stale content when the same staged file name is committed again; always commit from a fresh file name and verify.
+Next: real attack direction/zone and blocks from the combat module (C_CombatActorActionAttack etc.), smoother transitions; then shared enemies.
